@@ -90,20 +90,27 @@ _In this model, the marginal effect of 'year' for women is -0.011006 + -0.005817
 (@) (4 points) Create a plot of the fitted values (with confidence intervals) with respect to `year`, grouped by `women`. Do not use `geom_smooth()`.
 ```{r}
 par(mfrow = c(1,1))
-fit1 <- lm(sprinters$finish ~ sprint.model1$fitted.values)
-
 plot(sprinters$finish ~ sprint.model1$fitted.values)
 abline(0,1)
+
+year = seq(from = 1928, to = 2004, by = 4) #Because I do not have values for women prior to 1928.
 
 #Option1
 pred1_df <- data.frame(year = sprinters$year, women = c(0,1))
 pred1 <- predict(sprint.model1, newdata = pred1_df, interval = "confidence")
 pred1 <- cbind(pred1, pred1_df)
 
-ggplot(pred1, aes(x = year, y = fit, ymin = lwr, ymax = upr, colour = factor(women), fill = factor(women))) + geom_ribbon(alpha = 0.2, colour = NA) + geom_line() 
+ggplot(pred1, aes(x = year, y = fit, ymin = lwr, ymax = upr, colour = factor(women), fill = factor(women))) + geom_point() + geom_ribbon(alpha = 0.2, colour = NA) + geom_line() 
 
 #Option2
-ggplot(sprinters,aes(x=year,y=finish,colour=as.factor(women))) + geom_point() + theme_bw() + stat_smooth(method='lm', formula = y~x) 
+ggplot(sprinters,aes(x=year,y=finish,colour=as.factor(women))) + geom_point() + theme_bw() + stat_smooth(method='lm') 
+```
+
+######I TRIED THIS FROM LAB 14, but was unsucccessful. Please let me know how to fix this when you send out the grades.
+```{r}
+#coef.df = data.frame(Women.Intercept = c(coef(sprint.model1)[1],coef(sprint.model1)[1]+coef(sprint.model1)[3]), Women.Slope = c(coef(sprint.model1)[2],coef(sprint.model1)[2]+coef(sprint.model1)[4]), Women = c('0','1'))
+
+#ggplot() + geom_point(data=sprinters, aes(y = finish,x = year,colour = factor(women))) + geom_abline(aes(intercept = Women.Intercept,slope = Women.Slope,colour= Women, data=coef.df) + theme_bw() + theme(legend.position = c(0.7,0.1), legend.direction = 'horizontal') + scale_colour_brewer('Women',palette = 2,type = 'qual') +  ylab('100 Meter Sprint Gold Medal Winning Finish Times') + xlab('Year of Olympic Games'))
 ```
 
 (@) (2 points) Create the same plot as in the previous problem for the model
@@ -134,7 +141,7 @@ ggplot(pred2, aes(x = year, y = fit, ymin = lwr, ymax = upr, colour = factor(wom
 
 (@) (4 points) Explain in no more than 2 sentences how this specification differs from the prior specification.
 
-_Model2log differs in specification from Model1 because the outcome variable 'finish' has been log transformed to address this variable's obvious right skew. This transformation will change how we interpret the explanatory variable Beta coefficients to "a one unit increase in Xi is predicted to increase log(finish) by $exp(\beta_X_i)"$._
+Model2log differs in specification from Model1 because the outcome variable 'finish' has been log transformed to address this variable's obvious right skew. This transformation will change how we interpret the explanatory variable Beta coefficients to "a one unit increase in Xi is predicted to increase log(finish) by $exp$ $\beta{X}_i$. 
 
 (@) (6 points) Rerun the analysis and recreate the plot for the model:
     $$
@@ -161,7 +168,7 @@ ggplot(pred3, aes(x = year, y = fit, ymin = lwr, ymax = upr, colour = factor(wom
 
 (@) (4 points) Explain in 2-3 sentences how this specification differs from the previous models. 
 
-_Model3 assumes that the effect of 'year' is nonlinear. This must be incorporated into the original model specification (Model1) and the interaction term 'women:year'._
+_Model3 assumes that the effect of 'year' is nonlinear and quadratic. This new specification builds on the improvements made in Model 2 by incorporating the quadratic nonlinear effect of year into the new model (and the interaction term 'women:year') but the way the new model is specified helps to maintain a model improvement 'baseline' to better see the improvements made to our model with the inclusion of the new explanatory variables._
 
 (@) (4 points) Compare the visual fit of these models to the data within the observed period. Which (if any) do you find to be plausible fits?
 
@@ -215,11 +222,11 @@ plot(sprint.model3,5)
 #plot(sprint.model3)
 ```
 
-_Of the three models specified, I find Model3 to be the "best" model because the distribution of the residuls are relatively normally distributed, the residuals seem to be randomly distributed around zero, and the residual variance appears to be more constant across finish times in this model.  Additionally, the plot of standardized residuals is better in Model3  because the red line is flatter in Model 3 compared to the others and two of the potentially high leverage points(42,25) are closer to the mean0._ 
+_Of the three models specified, I find Model3 to be the "best" model because the distribution of the residuls are relatively normally distributed, the residuals seem to be randomly distributed around zero, and the residual variance appears to be more constant across finish times in this model (less heteroskedasticity).  Additionally, the plot of standardized residuals is better in Model3 because the red line is flatter in Model 3 compared to the others and two of the potentially high leverage points(42,25) are closer to the mean0._ 
 
 (@) (6 points) Do these models have different predictions for the Olympics of 2156? Why or why not?
 ```{r}
-year_hyp <- seq(from = min(sprinters$year), to = 2156, by =4)
+year_hyp <- seq(from = 1928, to = 2156, by = 4)
 
 pred1_df <- data.frame(year = year_hyp, women = c(0,1))
 pred1 <- predict(sprint.model1, newdata = pred1_df, interval = "confidence")
@@ -255,7 +262,7 @@ stargazer(pred1.male,pred2.male,pred3.male,type='text',omit.stat=c("f", "rsq"),c
 par(mfrow = c(1,1))
 ```
 
-_Visually, these models do not appear to have different predictions for women or men for the 2156 Olympics. In this instance, I think it is important to remember that 2156 is far enough into the future that it is safe to assume that predictions are less precise. This allows for the different model predictions with their confidence intervals to overlap one another. Looking at the values for fit, lwr, and upr in the table, it is apparent that these models include the same range of finish times for men and women and a conclusion that there is no difference is supported._
+_Visually, while  these models  appear  to have wildly different confidence intervals and different convergances, it is very plausible that these models do not appear to have different predictions for women or men for the 2156 Olympics. In this instance, I think it is important to remember that 2156 is far enough into the future that it is safe to assume that predictions are less precise. This allows for the different model predictions with their confidence intervals to overlap one another. Looking at the values for fit, lwr, and upr in the table, it is apparent that these models include the same range of finish times for men and women and a conclusion that there is no difference is visually supported._
 
 (@) (6 points) Now create a new variable, the ratio of men’s time to women’s time in each year. Log-transform this variable and regress it on year. Plot the results, with confidence intervals, on the scale of the ratio men’s time to women’s time (i.e., transform it back from the natural logarithm).
 ```{r}
@@ -343,7 +350,7 @@ par(mfrow = c(2,2))
 plot(model1)
 ```
 
-(@) (8 points) Provide a substantive interpetation of each coefficient and note whether a given coefficient is statistically significant. 
+(@) (8 points) Provide a substantive interpretation of each coefficient and note whether a given coefficient is statistically significant. 
 _Since several of the explanatory variables are lagged, the linear coefficients can most easily be interpreted and understood by realizing that the estimated coefficient of a lagged $\X$ measures the change in this year's $\Y$ atributed to a one unit increase in the $\X$_ *__five years ago__,* _holding all other variables constant._
 
 *For instance, the equation would look like this:*  
@@ -405,7 +412,6 @@ results = data.frame(residuals = model1$residuals, fitted = model1$fitted.values
 par(mfrow = c(1,1))
 plot(fitted ~ regime1, results)
 
-par(mfrow = c(2,3))
 plot(std.resids ~ oilL5, results)
 abline(h = 2, lty = 3, col = 'orangered'); abline(h = -2, lty = 3, col = 'orangered'); abline(h = 0, lty = 1, col = 'firebrick')
 plot(std.resids ~ metalL5, results)
@@ -436,12 +442,12 @@ _This model has heteroskedastcity problems; there is non-constant variance in th
 ```{r}
 summary(rossoil$islam)
 rossoil$islam_dummy = ifelse(rossoil$islam>='0.0070',1,0)
-rossoil$oil_mod <- log(rossoil$oilL5+ 0.001) 
+#rossoil$oil_mod <- log(rossoil$oilL5+ 0.001) 
 
-model4 <- lm(formula = regime1 ~ oil_mod + metalL5 + log(GDPpcL5) + factor(islam_dummy) + islam:islam_dummy + factor(oecd), data = rossoil)
-avPlots(model4)
-summary(model4)
-plot(model4)
+#model4 <- lm(formula = regime1 ~ oil_mod + metalL5 + log(GDPpcL5) + factor(islam_dummy) + islam:islam_dummy + factor(oecd), data = rossoil)
+#avPlots(model4)
+#summary(model4)
+#plot(model4)
 
 model5 <- lm(formula = regime1 ~ oilL5 + metalL5 + log(GDPpcL5) + factor(islam_dummy) + islam:islam_dummy + factor(oecd), data = rossoil)
 avPlots(model5)
@@ -452,29 +458,29 @@ plot(model5)
 #screenreg(list(model1, model4, model5))
 ```
 
-_Based on the histograms discussed in #12, I could have log transformed several variables to better address deal the right skew in the data. I chose to create a model (model4) that log transformed 'oilL5' and 'GDPpcL5' while also creating a dummy variable for the values of 'islam' above the median of 0.0070. I believe there is a connection between oil production and GDP; my logic was that if I am log transforming one, I need to log transform the other. I chose to use the median values of 'islam' as a cut point to correct for the effects of high value observations on the 'islam' mean._ 
+_Based on the histograms discussed in #12, I could have log transformed several variables to better address deal the right skew in the variable. I chose to create a model (model5) that log transformed 'GDPpcL5' while also creating a dummy variable for the values of 'islam' above the median of 0.0070. I chose to use the median values of 'islam' as a cut point to correct for the effects of high value observations on the 'islam' mean._ 
 
 (@) (4 points) For your new model, record and compare the adjusted $R^2$, AIC score, and BIC score for your new model.
 ```{r}
 library(stargazer); library(knitr)
-stargazer(model1, model4, model5, type = 'text', column.labels = c('Model1', 'Model 4','Model 5'), model.names = FALSE, model.numbers = FALSE)
+stargazer(model1, model5, type = 'text', column.labels = c('Model1', 'Model 5'), model.names = FALSE, model.numbers = FALSE)
 
-AIC(model1,model4,model5)
-BIC(model1,model4,model5)
+AIC(model1,model5)
+BIC(model1,model5)
 ```
 
 (@) (4 points) For both of your new specifications, compute the expected change in `regime1` given a change in `oilL5` from the 50th percentile to the 95th percentile of the fully observed data.
 ```{r}
 #Model4
-oil_lo_4 <- mean(rossoil$oil_mod)
-oil_hi_4 <- mean(rossoil$oil_mod) + 2*sd(rossoil$oil_mod)
+#oil_lo_4 <- mean(rossoil$oil_mod)
+#oil_hi_4 <- mean(rossoil$oil_mod) + 2*sd(rossoil$oil_mod)
 
-pred4_oil_lo <- predict(model4,newdata = data.frame(oil_mod = oil_lo_4, metalL5 = mean(rossoil$metalL5), GDPpcL5 = mean(log(rossoil$GDPpcL5)), islam_dummy = 0, islam = median(rossoil$islam), oecd = 0), interval = "confidence")
+#pred4_oil_lo <- predict(model4,newdata = data.frame(oil_mod = oil_lo_4, metalL5 = mean(rossoil$metalL5), GDPpcL5 = mean(log(rossoil$GDPpcL5)), islam_dummy = 0, islam = median(rossoil$islam), oecd = 0), interval = "confidence")
 
-pred4_oil_hi <- predict(model4,newdata = data.frame(oil_mod = oil_hi_4, metalL5 = mean(rossoil$metalL5), GDPpcL5 = mean(log(rossoil$GDPpcL5)), islam_dummy = 0, islam = median(rossoil$islam), oecd = 0), interval = "confidence")
+#pred4_oil_hi <- predict(model4,newdata = data.frame(oil_mod = oil_hi_4, metalL5 = mean(rossoil$metalL5), GDPpcL5 = mean(log(rossoil$GDPpcL5)), islam_dummy = 0, islam = median(rossoil$islam), oecd = 0), interval = "confidence")
 
-pred4_diff <- data.frame(diff = pred4_oil_hi[ , "fit"] - pred4_oil_lo[ , "fit"]) 
-head(pred4_diff)
+#pred4_diff <- data.frame(diff = pred4_oil_hi[ , "fit"] - pred4_oil_lo[ , "fit"]) 
+#head(pred4_diff)
 
 #Model5
 mean(rossoil$GDPpcL5)
@@ -489,90 +495,70 @@ pred5_diff <- data.frame(diff = pred5_oil_hi[ , "fit"] - pred5_oil_lo[ , "fit"])
 head(pred5_diff)
 ```
 
-_We can be 95 % confident that the __average__ expected change predicted by Model 4 in 'regime1'  resulting from a given change in 'oilL5' from the 50th percentile to the 95th percentile holding all other variables constant is a decrease of approximately 0.84 units._
-
 _We can be 95 % confident that the __average__ expected change predicted by Model 5 in 'regime1'  resulting from a given change in 'oilL5' from the 50th percentile to the 95th percentile holding all other variables constant is a decrease of approximately 1.74 units._
 
 (@) (4 points) Assess how much substantive difference finding the best model makes. Be specific and concrete; i.e., show what each model does. 
 ```{r}
 par(mfrow = c(1,1))
 
-library(stats4)
-LL <- function(beta0, beta1, beta2, beta3, beta4, beta5, beta6, mu, sigma) {
-    R = rossoil$regime1 - rossoil$oecd * beta6 - (rossoil$islam * rossoil$islam_dummy) * beta5 - rossoil$islam_dummy * beta4 - log(rossoil$GDPpcL5) * beta3  - rossoil$metalL5  * beta2 - rossoil$oil_mod * beta1 - beta0
-    #
-    R = suppressWarnings(dnorm(R, mu, sigma, log = TRUE))
-    #
-    -sum(R)
-}
-
-m.l.e. = mle(LL, start = list(beta0 = 1, beta1 = 1, beta2 = 1, beta3 = 1, beta4 = 1, beta5 = 1, beta6 = 1, sigma = 1), fixed = list(mu = 0), nobs = length(rossoil$regime1))
-
-summary(m.l.e.)
-
-LL2 <- function(beta0, beta1, beta2, beta3, beta4, beta5, beta6, mu, sigma) {
-    R = rossoil$regime1 - rossoil$oecd * beta6 - (rossoil$islam * rossoil$islam_dummy) * beta5 - rossoil$islam_dummy * beta4 - log(rossoil$GDPpcL5) * beta3  - rossoil$metalL5  * beta2 - rossoil$oilL5 * beta1 - beta0 
-    #
-    R = suppressWarnings(dnorm(R, mu, sigma, log = TRUE))
-    #
-    -sum(R)
-}
-
-m.l.e.2 = mle(LL2, start = list(beta0 = 1, beta1 = 1, beta2 = 1, beta3 = 1, beta4 = 1, beta5 = 1, beta6 = 1, sigma=1),
-             fixed = list(mu = 0),
-             nobs = length(rossoil$regime1))
-
-summary(m.l.e.2)
-```
-
-_Iam going to respecify a model based on the significance levels of explanatory variables in Models 4 and 5._
-
-```{r}
-LL3 <- function(beta0, beta1, beta2, beta3, mu, sigma) {
-    R = rossoil$regime1 - (rossoil$islam * rossoil$islam_dummy) * beta3 - rossoil$islam_dummy * beta2 - log(rossoil$GDPpcL5) * beta1 - beta0
-    #
-    R = suppressWarnings(dnorm(R, mu, sigma, log = TRUE))
-    #
-    -sum(R)
-}
-
-m.l.e.3 = mle(LL3, start = list(beta0 = 1, beta1 = 1, beta2 = 1, beta3 = 1, sigma = 1), fixed = list(mu = 0), nobs = length(rossoil$regime1))
-
-summary(m.l.e.3)
-
-ols.estimate = lm(regime1 ~ log(GDPpcL5) + factor(islam_dummy) + islam:islam_dummy, data = rossoil)
-summary(ols.estimate)
-```
-
-######Comparison of Likelihoods
-
-```{r}
 L1 <- prod(dnorm(model1$residuals, mean = 0, sd = summary(model1)$sigma))
-L2 <- prod(dnorm(model4$residuals, mean = 0, sd = summary(model4)$sigma))
+#L2 <- prod(dnorm(model4$residuals, mean = 0, sd = summary(model4)$sigma))
 L3 <- prod(dnorm(model5$residuals, mean = 0, sd = summary(model5)$sigma))
-L4 <- prod(dnorm(ols.estimate$residuals, mean = 0, sd = summary(ols.estimate)$sigma))
-c(L1, L2, L3, L4)
+c(L1, L3)
+
+stargazer(model1,model5, type = 'text', column.labels = c('Model1', 'Model 5'), model.names = FALSE, model.numbers = FALSE)
+
+AIC(model1,model5)
+BIC(model1,model5)
 ```
 
-######Getting to the Best Model
-
-```{r}
-stargazer(model1,model4,model5,ols.estimate, type = 'text', column.labels = c('Model1', 'Model 4','Model 5', 'OLS Estimate'), model.names = FALSE, model.numbers = FALSE)
-
-AIC(model1,model4,model5,ols.estimate)
-BIC(model1,model4,model5,ols.estimate)
-```
-
-_After conducting a comparison of the models and their corresponding AIC and BIC scores it appears that the OLS Estimate Model balances parsimony and description with an R-square value that acccounts for 56.3%  of variation in the outcome 'regime1'._
-_I do have a  preference for the Model 5 specification mainly because it has a higher R-square value meaning this modelaccounts for approximately 61.5% of the variation in the outcome 'regime1'. Model 5 may need some non-linear transformation tweaking to become more descriptive, but I believe it may be pointing in the right direction._
-_Of the models tested, the OLS Estimate Model, has the lowest BIC score at 340.7228, with 5 df. It also has the most significant F statistic at 28.312*** (df = 3;66); **of the models** evaluated, it appears that the best model is the OLS Estimate._
+_After conducting a comparison of the models and their corresponding AIC and BIC scores it appears that Model 5 seems to best balance parsimony and description with an R-square value that acccounts for 61.5% of variation in the outcome 'regime1'. Model 5 may need some non-linear transformation tweaking to become more descriptive, but I believe it may be pointing in the right direction. Model 5 also has the most significant F statistic at 16.771*** (df = 6,63); **of the models** evaluated, in addition to having the lowest Residual Standard Errors._
 
 (@) (4 points) What other problems in the specification or estimation method remain unaddressed by our efforts (no more than 2-3 sentences)?
-_I have continuing concerns regarding the best model specification to use with this data, particularly because the models do not do a better job  accounting for the variation in the outcome (it only seems to account for a little more than half; this seems no better than chance). I think we might be missing some important explanatory variables that could be included in the model like women's rights which could be a proxy measure of oppression, or possibly a corruption index._ 
+```{r}
+par(mfrow = c(2,2))
+library(car)
+#mmp(model4, rossoil$oil_mod)
+#mmp(model4, rossoil$metalL5)
+#mmp(model4, log(rossoil$GDPpcL5))
+#mmp(model4, rossoil$islam)
+#mmp(model4, rossoil$oecd)
+#mmp(model4, rossoil$islam_dummy)
+
+mmp(model5, rossoil$oilL5)
+mmp(model5, rossoil$metalL5)
+mmp(model5, log(rossoil$GDPpcL5))
+mmp(model5, rossoil$islam)
+mmp(model5, rossoil$oecd)
+mmp(model5, rossoil$islam_dummy)
+```
+
+_Model 5 does a decent job of describing the data, but I don't think I need to log transform 'GDPpcL5'. Where my model appears to fail is in the specification of the relationship of 'islam' to the outcome. The dummy variable helps, but I need to transform 'islam' in a way that better expresses the relationship of this variable to the ouctome, possibly by changing the dummy to 'mean(islam)'. I have continuing concerns regarding the best model specification to use with this data, particularly because the models do not do a better job  accounting for the variation in the outcome (it only seems to account for a little more than half; this seems somewhat no better than chance). I think we might be missing some important explanatory variables that could be included in the model like women's rights which could be a proxy measure of oppression, or possibly a corruption index._ **Please see NOTES at end of document.**
 
 (@) Try a new specification that alters the dependent variable in order to address the heteroskedasticity problem. Assess whether your new model successfully addresses the problem. 
+```{r}
+rossoil$regime2 = rossoil$regime1^2
+Model6 <- lm(regime2 ~ oilL5 + metalL5 + GDPpcL5 + factor(islam_dummy) + islam:islam_dummy +  I(islam ^ 2) + factor(oecd), data = rossoil)
+summary(Model6)
+plot(Model6)
 
+results = data.frame(residuals = Model6$residuals, fitted = Model6$fitted.values, std.resids = rstandard(Model6), rossoil)
+par(mfrow = c(1,1))
+plot(fitted ~ regime1, results)
+par(mfrow = c(2,3))
+plot(std.resids ~ oilL5, results)
+abline(h = 2, lty = 3, col = 'orangered'); abline(h = -2, lty = 3, col = 'orangered'); abline(h = 0, lty = 1, col = 'firebrick')
+plot(std.resids ~ metalL5, results)
+abline(h = 2, lty = 3, col = 'orangered'); abline(h = -2, lty = 3, col = 'orangered'); abline(h = 0, lty = 1, col = 'firebrick')
+plot(std.resids ~ GDPpcL5, results)
+abline(h = 2, lty = 3, col = 'orangered'); abline(h = -2, lty = 3, col = 'orangered'); abline(h = 0, lty = 1, col = 'firebrick')
+plot(std.resids ~ islam, results)
+abline(h = 2, lty = 3, col = 'orangered'); abline(h = -2, lty = 3, col = 'orangered'); abline(h = 0, lty = 1, col = 'firebrick')
+plot(std.resids ~ oecd, results)
+abline(h = 2, lty = 3, col = 'orangered'); abline(h = -2, lty = 3, col = 'orangered'); abline(h = 0, lty = 1, col = 'firebrick')
+```
 
+_This model has a similar heteroskedastcity presentation to that of Model5; there is still non-constant variance in the residuals most notably in 'metalL5', 'islam', and 'oilL5'. These variables still have a lot of points clumped around the lower values, but that  is to be expected in a world of unequal distribution of natural resources. Hence, while the heteroskedasticity is not "fixed" in this model specification, it may be as good as it can be considering reality. Additionally, the high leverage outliers are now 6 = Bahrain, 51 = Oman, 58 = Saudi Arabia; this is due to the additional weight Model 6 placed on 'islam'. Overall, with an R-square of 62.3 this model does a better job of explaining the variance in the outcome than Model 5._
 
 #NOTES:
-**I would like to know how to log transform 'islam' in such a way that it gets "turned on" in the equation when the 'islam dummy' = 1, but log(islam) is "turned off" when the 'islam_dummy' = 0.**
+**I would like to know how to log transform 'islam' in such a way that it gets "turned on" in the equation when the 'islam dummy' = 1, but log(islam) is "turned off" when the 'islam_dummy' = 0.  Would I just add the 0.001 to 'islam' when  transforming the variable? Could you please help with this after the test is graded?  Thank you!**
